@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scrabble Scores</title>
+<style>
+body { font-family: sans-serif; padding: 16px; }
+input, button { font-size: 16px; margin: 4px; }
+.player { margin: 8px 0; }
+</style>
+</head>
+<body>
+
+<h2>Scrabble Scores</h2>
+
+<input id="name" placeholder="Player name">
+<button onclick="addPlayer()">Add</button>
+
+<div id="players"></div>
+
+<script>
+let scores = JSON.parse(localStorage.getItem("scores")) || {};
+
+function save() {
+  localStorage.setItem("scores", JSON.stringify(scores));
+}
+
+function addPlayer() {
+  const name = nameInput.value.trim();
+  if (!name || scores[name] !== undefined) return;
+  scores[name] = 0;
+  nameInput.value = "";
+  save(); render();
+}
+
+function change(name, delta) {
+  scores[name] += delta;
+  save(); render();
+}
+
+function render() {
+  players.innerHTML = "";
+  for (let p in scores) {
+    players.innerHTML += `
+      <div class="player">
+        <b>${p}</b>: ${scores[p]}
+        <button onclick="change('${p}',1)">+1</button>
+        <button onclick="change('${p}',-1)">-1</button>
+      </div>`;
+  }
+}
+
+const nameInput = document.getElementById("name");
+const players = document.getElementById("players");
+render();
+</script>
+
+</body>
+</html>
