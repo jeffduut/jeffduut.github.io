@@ -1,58 +1,57 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
 <title>Scrabble Scores</title>
 <style>
-body { font-family: sans-serif; padding: 16px; }
-input, button { font-size: 16px; margin: 4px; }
-.player { margin: 8px 0; }
+table{border-collapse:collapse}td,th{border:1px solid #999;padding:6px;text-align:center}
+tfoot{font-weight:bold}
 </style>
 </head>
 <body>
 
-<h2>Scrabble Scores</h2>
+<button onclick="toggle()">Collapse / Expand</button>
 
-<input id="name" placeholder="Player name">
-<button onclick="addPlayer()">Add</button>
+<table id="scoreTable">
+<thead>
+<tr><th>Round</th><th>Alice</th><th>Bob</th></tr>
+<tr id="inputRow">
+<th>+</th>
+<td><input type="number"></td>
+<td><input type="number"></td>
+</tr>
+</thead>
 
-<div id="players"></div>
+<tbody></tbody>
+
+<tfoot>
+<tr><td>Total</td><td>0</td><td>0</td></tr>
+</tfoot>
+</table>
 
 <script>
-let scores = JSON.parse(localStorage.getItem("scores")) || {};
+const table=document.getElementById("scoreTable");
+const inputs=[...document.querySelectorAll("#inputRow input")];
 
-function save() {
-  localStorage.setItem("scores", JSON.stringify(scores));
+inputs.forEach(i=>i.addEventListener("keydown",e=>{
+if(e.key==="Enter") addRound();
+}));
+
+function addRound(){
+const row=table.tBodies[0].insertRow();
+row.insertCell().textContent=table.tBodies[0].rows.length;
+inputs.forEach((i,idx)=>{
+row.insertCell().textContent=i.value||0;
+table.tFoot.rows[0].cells[idx+1].textContent=
++table.tFoot.rows[0].cells[idx+1].textContent + (+i.value||0);
+i.value="";
+});
 }
 
-function addPlayer() {
-  const name = nameInput.value.trim();
-  if (!name || scores[name] !== undefined) return;
-  scores[name] = 0;
-  nameInput.value = "";
-  save(); render();
+function toggle(){
+table.tBodies[0].style.display=
+table.tBodies[0].style.display==="none"?"":"none";
 }
-
-function change(name, delta) {
-  scores[name] += delta;
-  save(); render();
-}
-
-function render() {
-  players.innerHTML = "";
-  for (let p in scores) {
-    players.innerHTML += `
-      <div class="player">
-        <b>${p}</b>: ${scores[p]}
-        <button onclick="change('${p}',1)">+1</button>
-        <button onclick="change('${p}',-1)">-1</button>
-      </div>`;
-  }
-}
-
-const nameInput = document.getElementById("name");
-const players = document.getElementById("players");
-render();
 </script>
 
 </body>
