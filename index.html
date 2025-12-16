@@ -3,25 +3,77 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <title>Scrabble Scoresheet</title>
 <style>
-:root{font-family:system-ui}
-body{padding:24px;background:#f7f7f9}
-.container{max-width:760px;margin:auto;background:#fff;padding:20px;border-radius:8px}
-button{padding:8px 12px;border:0;border-radius:6px;background:#0366d6;color:#fff}
+:root{font-family:'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; font-size:15px}
+body{padding:24px;background:#f7f7f9;color:#24292f;line-height:1.45;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+.container{max-width:760px;margin:auto;background:#fff;padding:24px;border-radius:12px;box-shadow:0 6px 20px rgba(31,41,55,0.06)}
+h1{margin:0 0 12px;font-size:24px;font-weight:700;letter-spacing:-0.02em}
+button{padding:8px 12px;border:0;border-radius:8px;background:#0366d6;color:#fff;cursor:pointer;transition:transform .06s ease, filter .12s ease, box-shadow .12s ease;min-height:32px;display:inline-flex;align-items:center;box-sizing:border-box;vertical-align:middle}
+button:hover{filter:brightness(1.05);transform:translateY(-1px)}
+button:active{transform:translateY(0)}
+button:disabled{opacity:.5;cursor:not-allowed}
 button.secondary{background:#6c757d}
-.round-input{width:72px}
-.name-edit{display:block;min-width:96px;text-align:left}
-thead th{ text-align:left; vertical-align:top; }
+button.next-round,.next-round,#start-btn{padding:6px 10px;font-size:13px;border-radius:6px;background:#28a745;color:#fff}
+button.next-round:hover,#start-btn:hover{filter:brightness(1.03)}
+.btn-danger{background:#d73a49}
+.round-input{width:72px;padding:6px 8px;border:1px solid #dfe3e6;border-radius:6px;transition:box-shadow .12s ease;background:#fff;text-align:left;text-indent:0;font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
+
+/* make the setup input visually match round inputs and align with the Add player button */
+button{font-weight:600}
+#player-name{display:inline-block;min-height:32px;padding:8px 12px;border:1px solid #dfe3e6;border-radius:8px;background:#fff;transition:box-shadow .12s ease;box-sizing:border-box;vertical-align:middle}
+#player-name::placeholder{color:#9aa0a6}
+#player-name:focus{outline:none;box-shadow:0 0 0 4px rgba(3,102,214,0.12)}
+.round-input::placeholder{color:#9aa0a6}
+.round-input:focus{outline:none;box-shadow:0 0 0 4px rgba(3,102,214,0.12)}
+.name-edit{display:block;min-width:96px;text-align:left;text-indent:1ch}
+thead th{ text-align:left; vertical-align:top; font-weight:600; padding:8px 6px}
 th:first-child, td:first-child{ padding-right:12px }
-/* right-align the control cell in the totals row */
-tfoot td:last-child{ text-align:right }
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;margin-top:8px}
+th,td{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:top}
+tbody tr:nth-child(odd){background:#fbfbfb}
+tfoot td{font-weight:600;border-top:2px solid #e6e6e6;font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
+tfoot td:not(:first-child):not(:last-child){ text-indent:1ch }
+th:last-child, tbody td:last-child, tfoot td:last-child{ text-align:left; vertical-align:top; width:auto }
 .player-list{margin:12px 0;padding-left:0;margin-left:0;list-style:none}
 .player-list li{margin:4px 0}
+/* Setup: center everything above recent games */
+.container.setup{ text-align:center }
+.container.setup form{ display:inline-flex; justify-content:center; align-items:center; gap:8px; flex-wrap:wrap }
+.container.setup #player-list{ display:inline-block; text-align:left }
+.container.setup #no-players{ text-align:center }
+.container.setup #message{ text-align:center }
+/* Ensure recent games and everything below remain left-justified and span the full viewport */
+.container.setup .recent-section{
+  text-align:left;
+  width:100vw;
+  margin-left:calc(50% - 50vw);
+  padding-left:0;
+  padding-right:0;
+  box-sizing:border-box;
+}
+.container.setup .recent-section ul{ padding-left:0; margin-left:0; list-style:disc; text-align:left }
 .recent-section{margin-top:18px;border-top:1px solid #eee;padding-top:12px}
-.recent-section h3{margin:0 0 8px 0;font-size:16px}
-.recent-section li{margin:6px 0;font-size:14px}
-</style>
+.recent-section h3{margin:0 0 8px 0;font-size:16px;text-align:left;margin-left:0}
+#recent-games{padding-left:0;margin:0;width:100%}
+#recent-games li{margin:6px 0;font-size:14px;padding-left:2ch;text-align:left;width:100%;list-style:disc;list-style-position:inside}
+
+/* ensure nothing in the recent section inherits center alignment from the setup container */
+.container.setup .recent-section, .container.setup .recent-section h3, .container.setup #recent-games, .container.setup #recent-games li{ text-align:left }
+
+.total-updated{animation:flash .6s ease}
+@keyframes flash{0%{background:#fff3cd}100%{background:transparent}}
+/* Ensure setup and recent-games text use same font style as the game screen */
+.container.setup h1, .container.setup form, .container.setup #player-list, .container.setup #no-players, .container.setup #message, .container.setup .recent-section, .container.setup #recent-games, .container.setup #recent-games li, .container.setup #player-list li{
+  font-family: inherit;
+  font-weight:400;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  letter-spacing: normal;
+  color: inherit;
+}</style>
 </head>
 
 <body>
@@ -43,11 +95,11 @@ tfoot td:last-child{ text-align:right }
   <button type="button" id="end-btn" class="secondary">End game</button>
 </div>
 
-<table id="players-table" hidden>
+<div class="table-wrap"><table id="players-table" hidden>
 <thead></thead>
 <tbody></tbody>
 <tfoot></tfoot>
-</table>
+</table></div>
 
 <div id="recent-section" hidden>
   <h3>Recent games</h3>
@@ -70,6 +122,7 @@ const recentSection=document.getElementById('recent-section');
 const recentGamesEl=document.getElementById('recent-games');
 const thead=table.querySelector('thead');
 const tbody=table.querySelector('tbody');
+const container=document.querySelector('.container');
 const tfoot=table.querySelector('tfoot');
 const noPlayers=document.getElementById('no-players');
 const msg=document.getElementById('message');
@@ -99,6 +152,8 @@ function render(){
 	thead.innerHTML='';
 	tbody.innerHTML='';
 	tfoot.innerHTML='';
+	// toggle setup centering when not started
+	container.classList.toggle('setup', !started);
 
 	// Setup phase: show form + list, hide table
 	if(!started){
@@ -122,6 +177,7 @@ function render(){
 					return `<li>${date}: ${playersStr}</li>`;
 				}).join('');
 			}
+			input.focus();
 			return;
 		}
 
@@ -139,6 +195,7 @@ function render(){
 				return `<li>${date}: ${playersStr}</li>`;
 			}).join('');
 		}
+		input.focus();
 		return;
 	}
 
@@ -179,18 +236,22 @@ function render(){
 	players.forEach(p=>{
 		tr.innerHTML+=`<td>${p.scores.reduce((a,b)=>a+b,0)}</td>`;
 	});
-	tr.innerHTML += '<td style="text-align:right"></td>';
+	tr.innerHTML += '<td></td>';
 	tfoot.appendChild(tr);
 	// place the End game button into the last cell when a game is active
 	if(started){
 		const lastCell = tfoot.querySelector('tr td:last-child');
 		if(lastCell){
 			lastCell.innerHTML = '';
+			endBtn.classList.remove('secondary');
+			endBtn.classList.add('btn-danger');
 			lastCell.appendChild(endBtn);
 		}
 	} else {
 		// ensure endBtn is out of the table when not started
 		if(!gameControls.contains(endBtn)) gameControls.appendChild(endBtn);
+		endBtn.classList.remove('btn-danger');
+		endBtn.classList.add('secondary');
 		gameControls.hidden = true;
 	}
 }
@@ -198,7 +259,7 @@ function render(){
 function addPlayer(name){
 	if(!name) return;
 	players.push({name,scores:Array(rounds).fill(null)});
-	saveState();render();input.value='';
+	saveState();render();input.value='';input.focus();
 } 
 
 function addRound(){
@@ -238,7 +299,14 @@ function updateTotals(){
 	if(!totalsRow) return;
 	players.forEach((p,i)=>{
 		const cell = totalsRow.children[i+1];
-		if(cell) cell.textContent = p.scores.reduce((a,b)=>a+b,0);
+		if(!cell) return;
+		const newTotal = p.scores.reduce((a,b)=>a+(b||0),0);
+		const prev = cell.textContent.trim();
+		if(prev !== String(newTotal)){
+			cell.textContent = newTotal;
+			cell.classList.add('total-updated');
+			setTimeout(()=>cell.classList.remove('total-updated'),600);
+		}
 	});
 }
 
