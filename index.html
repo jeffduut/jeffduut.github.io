@@ -5,40 +5,56 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Scrabble Scoresheet</title>
 <style>
-body{margin:0;padding:16px;font-family:Inter,system-ui,sans-serif;background:#f7f7f9;color:#24292f}
-.container{max-width:480px;margin:auto;background:#fff;padding:16px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.06)}
-h1{margin:0 0 12px;font-size:20px;text-align:center}
-input,button{font-family:inherit;font-size:14px}
-input[type=text]{flex:1;padding:8px;border:1px solid #ccc;border-radius:8px;outline:none;margin-bottom:8px}
-button{padding:8px 12px;margin:4px;border:none;border-radius:8px;color:#fff;background:#0366d6;cursor:pointer;transition:0.2s;min-height:32px}
+body{margin:0;padding:12px;font-family:Inter,system-ui,sans-serif;background:#f7f7f9;color:#24292f}
+.container{max-width:400px;margin:auto;background:#fff;padding:12px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.06)}
+h1{margin:0 0 12px;font-size:18px;text-align:center}
+input,button{font-family:inherit;font-size:13px}
+input[type=text]{flex:1;padding:6px;border:1px solid #ccc;border-radius:6px;outline:none;margin-bottom:6px}
+button{padding:6px 10px;margin:2px;border:none;border-radius:6px;color:#fff;background:#0366d6;cursor:pointer;min-height:28px;transition:0.2s}
 button:hover{filter:brightness(1.05)}
 button.secondary{background:#6c757d}
 button.danger{background:#d73a49}
 button.next-round{background:#28a745}
-form{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
-#player-list,#recent-games{list-style:none;padding-left:0;margin:4px 0}
-.table-wrap{overflow-x:auto;margin-top:8px}
-table{width:100%;border-collapse:collapse}
-th,td{padding:6px;border-bottom:1px solid #eee;text-align:center;white-space:nowrap}
-thead th{font-weight:600;font-size:13px}
-tfoot td{font-weight:600;border-top:2px solid #e6e6e6;font-size:13px}
-.name-edit{display:block;min-width:50px;text-align:center}
-.round-input{width:48px;padding:4px;border:1px solid #ccc;border-radius:6px;text-align:center}
+form{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
+#player-list,#recent-games{list-style:none;padding-left:0;margin:4px 0;font-size:13px}
+.table-wrap{overflow-x:hidden;margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{padding:4px;border-bottom:1px solid #eee;text-align:center;white-space:nowrap}
+thead th{font-weight:600}
+tfoot td{font-weight:600;border-top:2px solid #e6e6e6}
+.name-edit{display:block;min-width:50px;text-align:center;font-size:12px}
+.round-input{width:36px;padding:2px;border:1px solid #ccc;border-radius:4px;text-align:center;font-size:12px}
 .total-updated{animation:flash .5s ease}
 @keyframes flash{0%{background:#fff3cd}100%{background:transparent}}
-@media(min-width:480px){.container{padding:24px}}
+
+#recent-games {
+  width: 90%;
+  margin: 4px auto;
+  padding-left: 0;
+  list-style-position: inside;
+  font-size: 13px;
+  white-space: normal;       /* allow wrapping */
+  overflow: visible;         /* show full content */
+}
+#recent-section h3 {
+  text-align: center;
+}
+
+
+
 </style>
 </head>
 <body>
 <div class="container">
 <h1>Scrabble Scoresheet</h1>
 
-<form id="add-player-form">
-<input id="player-name" type="text" placeholder="Player name" />
-<button type="button" id="add-player-btn">Add</button>
-<button type="button" id="start-btn" class="secondary" disabled>Start</button>
-<button type="button" id="clear-btn" class="secondary">Clear</button>
+<form id="add-player-form" style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:8px">
+  <input id="player-name" type="text" placeholder="Player name" style="width:100%;max-width:250px;text-align:center" />
+  <button type="button" id="add-player-btn" style="width:40%;max-width:250px">Add</button>
+  <button type="button" id="start-btn" class="secondary" disabled style="width:40%;max-width:250px">Start</button>
+  <button type="button" id="clear-btn" class="secondary" style="width:40%;max-width:250px">Clear</button>
 </form>
+
 
 <ul id="player-list"></ul>
 <p id="no-players">No players yet.</p>
@@ -61,9 +77,9 @@ tfoot td{font-weight:600;border-top:2px solid #e6e6e6;font-size:13px}
 </div>
 
 <script>
-const STORAGE='scrabble_state_mobile';
+const STORAGE='scrabble_state_mobile4';
 let state=JSON.parse(localStorage.getItem(STORAGE)||'{}');
-let players=state.players||[],rounds=state.rounds||0,started=state.started||false,recentGames=state.recentGames||[];
+let players=state.players||[], rounds=state.rounds||0, started=state.started||false, recentGames=state.recentGames||[];
 
 const input=document.getElementById('player-name');
 const addBtn=document.getElementById('add-player-btn');
@@ -80,64 +96,138 @@ const recentGamesEl=document.getElementById('recent-games');
 const endBtn=document.getElementById('end-btn');
 const gameControls=document.getElementById('game-controls');
 
-function save(){localStorage.setItem(STORAGE,JSON.stringify({players,rounds,started,recentGames}))}
-
-function renderSetup(){
-	playerList.innerHTML=players.map((p,i)=>`<li>${i+1}. ${p.name}</li>`).join('');
-	noPlayers.style.display=players.length?'none':'block';
-	startBtn.disabled=!players.length;
-
-	if(!recentGames.length){recentGamesEl.innerHTML='<li>No recent games</li>'}
-	else{recentGamesEl.innerHTML=recentGames.map(g=>`${new Date(g.date).toLocaleString()}: ${g.players.map(p=>p.name+' ('+p.total+')').join(', ')}`).join('')}
-	recentSection.hidden=false;
-	table.hidden=true;gameControls.hidden=true;
+function save() {
+    localStorage.setItem(STORAGE, JSON.stringify({players, rounds, started, recentGames}));
 }
 
-function renderGame(){
-	thead.innerHTML='';tbody.innerHTML='';tfoot.innerHTML='';
-	const header=document.createElement('tr');
-	header.innerHTML='<th>R</th>'+players.map((p,i)=>`<th><span class="name-edit" contenteditable data-i="${i}">${p.name}</span></th>`).join('')+'<th></th>';
-	thead.appendChild(header);
-	for(let r=0;r<rounds;r++){
-		const tr=document.createElement('tr');
-		tr.innerHTML='<td>'+ (r+1) +'</td>'+players.map((p,i)=>`<td><input class="round-input" data-p="${i}" data-r="${r}" value="${p.scores[r]??''}"></td>`).join('')+'<td>'+(r===rounds-1?'<button class="next-round">Next</button>':'')+'</td>';
-		tbody.appendChild(tr);
-	}
-	const totalRow=document.createElement('tr');
-	totalRow.innerHTML='<td>Total</td>'+players.map(p=>`<td>${p.scores.reduce((a,b)=>a+b,0)}</td>`).join('')+'<td></td>';
-	tfoot.appendChild(totalRow);
-	totalRow.lastChild.appendChild(endBtn);
-	table.hidden=false;recentSection.hidden=true;gameControls.hidden=true;
+// render recent games with one <li> per game
+function renderRecentGames() {
+    recentGamesEl.innerHTML = '';
+    if (!recentGames.length) {
+        const li = document.createElement('li');
+        li.textContent = 'No recent games';
+        recentGamesEl.appendChild(li);
+    } else {
+        recentGames.forEach(g => {
+            const li = document.createElement('li');
+            const date = new Date(g.date).toLocaleString();
+            const playersStr = g.players.map(p => `${p.name} (${p.total})`).join(', ');
+            li.textContent = `${date}: ${playersStr}`;
+            recentGamesEl.appendChild(li);
+        });
+    }
 }
 
-function render(){started?renderGame():renderSetup()}
+function renderSetup() {
+    playerList.innerHTML = players.map((p,i)=>`<li>${i+1}. ${p.name}</li>`).join('');
+    noPlayers.style.display = players.length ? 'none' : 'block';
+    startBtn.disabled = !players.length;
 
-function addPlayer(name){
-	if(!name) return;
-	players.push({name,scores:Array(rounds).fill(null)});
-	input.value='';input.focus();save();render();
+    renderRecentGames(); // <-- call here
+
+    recentSection.hidden = false;
+    table.hidden = true;
+    gameControls.hidden = true;
 }
 
-function addRound(){rounds++;players.forEach(p=>p.scores.push(null));save();render();}
+function renderGame() {
+    thead.innerHTML = ''; tbody.innerHTML = ''; tfoot.innerHTML = '';
+    const header=document.createElement('tr');
+    header.innerHTML = '<th>R</th>' + players.map((p,i)=>`<th><span class="name-edit" contenteditable data-i="${i}">${p.name}</span></th>`).join('') + '<th></th>';
+    thead.appendChild(header);
 
-addBtn.onclick=()=>addPlayer(input.value.trim());
-document.getElementById('add-player-form').onsubmit=e=>{e.preventDefault();addPlayer(input.value.trim());}
-startBtn.onclick=()=>{if(!players.length) return;if(!rounds)addRound();started=true;save();render();}
-endBtn.onclick=()=>{
-	recentGames.unshift({date:new Date().toISOString(),rounds,players:players.map(p=>({name:p.name,total:p.scores.reduce((a,b)=>a+b,0)}))});
-	if(recentGames.length>5) recentGames.length=5;
-	players=[];rounds=0;started=false;input.value='';save();render();
+    for(let r=0; r<rounds; r++){
+        const tr=document.createElement('tr');
+        tr.innerHTML = '<td>'+ (r+1) +'</td>' +
+            players.map((p,i)=>`<td><input class="round-input" data-p="${i}" data-r="${r}" value="${p.scores[r]??''}"></td>`).join('') +
+            '<td>' + (r===rounds-1?'<button class="next-round">Next</button>':'') + '</td>';
+        tbody.appendChild(tr);
+    }
+
+    const totalRow=document.createElement('tr');
+    totalRow.innerHTML = '<td>Total</td>' + players.map(p=>`<td>${p.scores.reduce((a,b)=>a+b,0)}</td>`).join('') + '<td></td>';
+    tfoot.appendChild(totalRow);
+    totalRow.lastChild.appendChild(endBtn);
+
+    table.hidden = false;
+    recentSection.hidden = true;
+    gameControls.hidden = true;
 }
-tbody.addEventListener('input',e=>{
-	const t=e.target;if(!t.classList.contains('round-input'))return;
-	const i=+t.dataset.p,r=+t.dataset.r;players[i].scores[r]=t.value===''?0:+t.value;save();
-	const totalsRow=tfoot.querySelector('tr');
-	if(totalsRow){players.forEach((p,i)=>totalsRow.children[i+1].textContent=p.scores.reduce((a,b)=>a+b,0));}
+
+function render() {
+    if (started) {
+        // hide setup elements
+        document.getElementById('add-player-form').style.display = 'none';
+        playerList.style.display = 'none';
+        noPlayers.style.display = 'none';
+        recentSection.style.display = 'none';
+
+        renderGame(); // show table
+    } else {
+        // show setup elements
+        document.getElementById('add-player-form').style.display = 'flex';
+        playerList.style.display = 'block';
+        noPlayers.style.display = players.length ? 'none' : 'block';
+        recentSection.style.display = 'block';
+
+        renderSetup();
+    }
+}
+
+
+function addPlayer(name) {
+    if(!name || players.length>=4) return;
+    players.push({name,scores:Array(rounds).fill(null)});
+    input.value=''; input.focus(); save(); render();
+}
+
+function addRound() {
+    rounds++; players.forEach(p=>p.scores.push(null)); save(); render();
+}
+
+addBtn.onclick = () => addPlayer(input.value.trim());
+document.getElementById('add-player-form').onsubmit = e => { e.preventDefault(); addPlayer(input.value.trim()); }
+
+startBtn.onclick = () => {
+    if(!players.length) return;
+    if(!rounds) addRound();
+    started = true;
+    save();
+    render();
+}
+
+endBtn.onclick = () => {
+    recentGames.unshift({
+        date: new Date().toISOString(),
+        rounds,
+        players: players.map(p=>({name: p.name, total: p.scores.reduce((a,b)=>a+b,0)}))
+    });
+    if(recentGames.length > 5) recentGames.length = 5;
+
+    players = [];
+    rounds = 0;
+    started = false;
+    input.value = '';
+    save();
+    render();
+}
+
+tbody.addEventListener('input', e => {
+    const t = e.target;
+    if(!t.classList.contains('round-input')) return;
+    const i = +t.dataset.p, r = +t.dataset.r;
+    players[i].scores[r] = t.value === '' ? 0 : +t.value;
+    save();
+    const totalsRow = tfoot.querySelector('tr');
+    if(totalsRow) players.forEach((p,i)=>totalsRow.children[i+1].textContent = p.scores.reduce((a,b)=>a+b,0));
 });
-tbody.addEventListener('click',e=>{if(e.target.classList.contains('next-round')) addRound();});
-clearBtn.onclick=()=>{if(confirm('Clear all?')){players=[];rounds=0;started=false;save();render();}}
+
+tbody.addEventListener('click', e => { if(e.target.classList.contains('next-round')) addRound(); });
+
+clearBtn.onclick = () => { if(confirm('Clear all?')) { players=[]; rounds=0; started=false; save(); render(); } }
 
 render();
+
 </script>
 </div>
 </body>
