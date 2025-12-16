@@ -5,16 +5,16 @@
 <title>Scrabble Scores</title>
 <style>
 table{border-collapse:collapse}td,th{border:1px solid #999;padding:6px;text-align:center}
+input{width:70px}
 tfoot{font-weight:bold}
-input{width:80px}
 </style>
 </head>
 <body>
 
 <div id="setup">
 Players:
-<input placeholder="Name" class="pname">
-<input placeholder="Name" class="pname">
+<div id="names"></div>
+<button onclick="addName()">+ Player</button>
 <button onclick="start()">Start</button>
 </div>
 
@@ -27,7 +27,15 @@ Players:
 </table>
 
 <script>
+const namesDiv=document.getElementById("names");
 const table=document.getElementById("scoreTable");
+
+addName(); addName();
+
+function addName(){
+namesDiv.insertAdjacentHTML("beforeend",
+'<input class="pname" placeholder="Name"> ');
+}
 
 function start(){
 const names=[...document.querySelectorAll(".pname")].map(i=>i.value||"Player");
@@ -36,13 +44,24 @@ table.hidden=false;
 
 table.tHead.innerHTML=
 `<tr><th>Round</th>${names.map(n=>`<th>${n}</th>`).join("")}</tr>
-<tr id="inputRow"><th>+</th>${names.map(()=>"<td><input type=number></td>").join("")}</tr>`;
+<tr id="inputRow"><th>+</th>${names.map(()=>'<td><input type="number"></td>').join("")}</tr>`;
 
 table.tFoot.innerHTML=
-`<tr><td>Total</td>${names.map(()=>"<td>0</td>").join("")}</tr>`;
+`<tr><td>Total</td>${names.map(()=>'<td>0</td>').join("")}</tr>`;
 
-document.querySelectorAll("#inputRow input").forEach(i=>
-i.addEventListener("keydown",e=>e.key==="Enter"&&addRound()));
+document.querySelectorAll("#inputRow input").forEach(i=>{
+i.addEventListener("input",recalc);
+i.addEventListener("keydown",e=>e.key==="Enter"&&addRound());
+});
+}
+
+function recalc(){
+const inputs=[...document.querySelectorAll("#inputRow input")];
+inputs.forEach((i,idx)=>{
+const base=[...table.tBodies[0].rows]
+.reduce((s,r)=>s+(+r.cells[idx+1].textContent||0),0);
+table.tFoot.rows[0].cells[idx+1].textContent=base+(+i.value||0);
+});
 }
 
 function addRound(){
@@ -51,12 +70,10 @@ const row=table.tBodies[0].insertRow();
 row.insertCell().textContent=table.tBodies[0].rows.length;
 
 inputs.forEach((i,idx)=>{
-const v=+i.value||0;
-row.insertCell().textContent=v;
-table.tFoot.rows[0].cells[idx+1].textContent=
-+table.tFoot.rows[0].cells[idx+1].textContent+v;
+row.insertCell().textContent=+i.value||0;
 i.value="";
 });
+recalc();
 }
 
 function toggle(){
