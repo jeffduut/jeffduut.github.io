@@ -73,7 +73,22 @@ th:last-child, tbody td:last-child, tfoot td:last-child{ text-align:left; vertic
   font-feature-settings: 'tnum' 1;
   letter-spacing: normal;
   color: inherit;
-}</style>
+}
+
+
+@media (max-width: 600px) {
+  body { padding: 12px; font-size: 14px; }
+  .container { padding: 16px; border-radius: 8px; }
+  h1 { font-size: 20px; }
+  button { padding: 6px 10px; font-size: 14px; min-height: 28px; }
+  #player-name, .round-input { width: 100%; font-size: 14px; }
+  form { flex-direction: column; align-items: stretch; gap: 6px; }
+  .table-wrap { overflow-x: auto; }
+  table th, table td { padding: 6px 8px; font-size: 13px; }
+  #recent-games li { font-size: 13px; }
+}
+
+</style>
 </head>
 
 <body>
