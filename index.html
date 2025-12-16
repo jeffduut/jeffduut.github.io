@@ -1,86 +1,294 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Scrabble Scores</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Scrabble Scoresheet</title>
 <style>
-table{border-collapse:collapse}td,th{border:1px solid #999;padding:6px;text-align:center}
-input{width:70px}
-tfoot{font-weight:bold}
+:root{font-family:system-ui}
+body{padding:24px;background:#f7f7f9}
+.container{max-width:760px;margin:auto;background:#fff;padding:20px;border-radius:8px}
+button{padding:8px 12px;border:0;border-radius:6px;background:#0366d6;color:#fff}
+button.secondary{background:#6c757d}
+.round-input{width:72px}
+.name-edit{display:block;min-width:96px;text-align:left}
+thead th{ text-align:left; vertical-align:top; }
+th:first-child, td:first-child{ padding-right:12px }
+/* right-align the control cell in the totals row */
+tfoot td:last-child{ text-align:right }
+.player-list{margin:12px 0;padding-left:0;margin-left:0;list-style:none}
+.player-list li{margin:4px 0}
+.recent-section{margin-top:18px;border-top:1px solid #eee;padding-top:12px}
+.recent-section h3{margin:0 0 8px 0;font-size:16px}
+.recent-section li{margin:6px 0;font-size:14px}
 </style>
 </head>
-<body>
 
-<div id="setup">
-Players:
-<div id="names"></div>
-<button onclick="addName()">+ Player</button>
-<button onclick="start()">Start</button>
+<body>
+<div class="container">
+<h1>Scrabble Scoresheet</h1>
+
+<form id="add-player-form">
+<input id="player-name" type="text" placeholder="Enter a player's name" />
+<button type="button" id="add-player-btn">Add player</button>
+<button type="button" id="start-btn" class="secondary" disabled>Start game</button>
+<button type="button" id="clear-btn" class="secondary">Clear all</button>
+</form>
+
+<div id="message"></div>
+<ul id="player-list" class="player-list"></ul>
+<p id="no-players">No players yet.</p>
+
+<div id="game-controls" hidden>
+  <button type="button" id="end-btn" class="secondary">End game</button>
 </div>
 
-<button onclick="toggle()">Collapse / Expand</button>
-
-<table id="scoreTable" hidden>
+<table id="players-table" hidden>
 <thead></thead>
 <tbody></tbody>
 <tfoot></tfoot>
 </table>
 
+<div id="recent-section" hidden>
+  <h3>Recent games</h3>
+  <ul id="recent-games"></ul>
+</div>
+</div>
+
 <script>
-const namesDiv=document.getElementById("names");
-const table=document.getElementById("scoreTable");
+const STORAGE_KEY='scrabble_state_v2';
+const input=document.getElementById('player-name');
+const addBtn=document.getElementById('add-player-btn');
+const clearBtn=document.getElementById('clear-btn');
+const table=document.getElementById('players-table');
+const form=document.getElementById('add-player-form');
+const startBtn=document.getElementById('start-btn');
+const gameControls=document.getElementById('game-controls');
+const endBtn=document.getElementById('end-btn');
+const playerList=document.getElementById('player-list');
+const recentSection=document.getElementById('recent-section');
+const recentGamesEl=document.getElementById('recent-games');
+const thead=table.querySelector('thead');
+const tbody=table.querySelector('tbody');
+const tfoot=table.querySelector('tfoot');
+const noPlayers=document.getElementById('no-players');
+const msg=document.getElementById('message');
 
-addName(); addName();
+let state=loadState();
+let players=state.players;
+let rounds=state.rounds;
+let started=!!state.started; 
+let recentGames = state.recentGames || []; 
 
-function addName(){
-namesDiv.insertAdjacentHTML("beforeend",
-'<input class="pname" placeholder="Name"> ');
+function loadState(){
+	try{
+		const raw=localStorage.getItem(STORAGE_KEY);
+		if(raw){
+			const parsed=JSON.parse(raw);
+			if(parsed?.players) return {players: parsed.players || [], rounds: parsed.rounds || 0, started: !!parsed.started, recentGames: parsed.recentGames || []};
+		}
+	}catch(e){}
+	return {players:[],rounds:0,started:false,recentGames:[]};
 }
 
-function start(){
-const names=[...document.querySelectorAll(".pname")].map(i=>i.value||"Player");
-document.getElementById("setup").hidden=true;
-table.hidden=false;
-
-table.tHead.innerHTML=
-`<tr><th>Round</th>${names.map(n=>`<th>${n}</th>`).join("")}</tr>
-<tr id="inputRow"><th>+</th>${names.map(()=>'<td><input type="number"></td>').join("")}</tr>`;
-
-table.tFoot.innerHTML=
-`<tr><td>Total</td>${names.map(()=>'<td>0</td>').join("")}</tr>`;
-
-document.querySelectorAll("#inputRow input").forEach(i=>{
-i.addEventListener("input",recalc);
-i.addEventListener("keydown",e=>e.key==="Enter"&&addRound());
-});
+function saveState(){
+	localStorage.setItem(STORAGE_KEY,JSON.stringify({players,rounds,started,recentGames}));
 }
 
-function recalc(){
-const inputs=[...document.querySelectorAll("#inputRow input")];
-inputs.forEach((i,idx)=>{
-const base=[...table.tBodies[0].rows]
-.reduce((s,r)=>s+(+r.cells[idx+1].textContent||0),0);
-table.tFoot.rows[0].cells[idx+1].textContent=base+(+i.value||0);
-});
+function render(){
+	thead.innerHTML='';
+	tbody.innerHTML='';
+	tfoot.innerHTML='';
+
+	// Setup phase: show form + list, hide table
+	if(!started){
+		form.hidden=false;
+		playerList.hidden=false;
+		table.hidden=true;
+		gameControls.hidden = true;
+		recentSection.hidden = false;
+
+		if(!players.length){
+			noPlayers.hidden=false;
+			playerList.innerHTML='';
+			startBtn.disabled = true;
+			// render recent games even if there are no players
+			if(!recentGames.length){
+				recentGamesEl.innerHTML = '<li>No recent games</li>';
+			} else {
+				recentGamesEl.innerHTML = recentGames.map(g=>{
+					const date = new Date(g.date).toLocaleString();
+					const playersStr = g.players.map(p=>`${p.name} (${p.total})`).join(', ');
+					return `<li>${date}: ${playersStr}</li>`;
+				}).join('');
+			}
+			return;
+		}
+
+		noPlayers.hidden=true;
+		startBtn.disabled = false;
+		playerList.innerHTML = players.map((p,i)=>`<li data-i="${i}">${i+1}. ${p.name}</li>`).join('');
+
+		// render recent games
+		if(!recentGames.length){
+			recentGamesEl.innerHTML = '<li>No recent games</li>';
+		}else{
+			recentGamesEl.innerHTML = recentGames.map(g=>{
+				const date = new Date(g.date).toLocaleString();
+				const playersStr = g.players.map(p=>`${p.name} (${p.total})`).join(', ');
+				return `<li>${date}: ${playersStr}</li>`;
+			}).join('');
+		}
+		return;
+	}
+
+	// Game started: hide setup UI, show table
+	form.hidden=true;
+	playerList.hidden=true;
+	noPlayers.hidden=true;
+	table.hidden=false;
+	// hide the separate controls container; the End button will be placed into the totals row
+	gameControls.hidden = true;
+	recentSection.hidden = true;
+
+	const hr=document.createElement('tr');
+	hr.innerHTML='<th>Round</th>';
+	players.forEach((p,i)=>{
+		hr.innerHTML+=`<th><span class="name-edit" contenteditable data-i="${i}">${p.name}</span></th>`;
+	});
+	hr.innerHTML += '<th></th>'; // control column
+	thead.appendChild(hr);
+
+	for(let r=0;r<rounds;r++){
+		const tr=document.createElement('tr');
+		tr.innerHTML=`<td>R${r+1}</td>`;
+		players.forEach((p,i)=>{
+			tr.innerHTML+=`<td><input class="round-input" data-p="${i}" data-r="${r}" value="${p.scores[r] == null ? '' : p.scores[r]}"></td>`;
+		});
+		// Add control cell: show Next round button on the latest round
+		if(r === rounds - 1){
+			tr.innerHTML += `<td><button class="next-round">Next round</button></td>`;
+		} else {
+			tr.innerHTML += `<td></td>`;
+		}
+		tbody.appendChild(tr);
+	}
+
+	const tr=document.createElement('tr');
+	tr.innerHTML='<td>Total</td>';
+	players.forEach(p=>{
+		tr.innerHTML+=`<td>${p.scores.reduce((a,b)=>a+b,0)}</td>`;
+	});
+	tr.innerHTML += '<td style="text-align:right"></td>';
+	tfoot.appendChild(tr);
+	// place the End game button into the last cell when a game is active
+	if(started){
+		const lastCell = tfoot.querySelector('tr td:last-child');
+		if(lastCell){
+			lastCell.innerHTML = '';
+			lastCell.appendChild(endBtn);
+		}
+	} else {
+		// ensure endBtn is out of the table when not started
+		if(!gameControls.contains(endBtn)) gameControls.appendChild(endBtn);
+		gameControls.hidden = true;
+	}
 }
+
+function addPlayer(name){
+	if(!name) return;
+	players.push({name,scores:Array(rounds).fill(null)});
+	saveState();render();input.value='';
+} 
 
 function addRound(){
-const inputs=[...document.querySelectorAll("#inputRow input")];
-const row=table.tBodies[0].insertRow();
-row.insertCell().textContent=table.tBodies[0].rows.length;
+	rounds++;
+	players.forEach(p=>p.scores.push(null));
+	saveState();render();
+} 
 
-inputs.forEach((i,idx)=>{
-row.insertCell().textContent=+i.value||0;
-i.value="";
+addBtn.onclick=()=>addPlayer(input.value.trim());
+form.onsubmit=e=>{ e.preventDefault(); addPlayer(input.value.trim()); };
+startBtn.onclick=()=>{ if(!players.length) return; if(rounds===0) addRound(); started=true; saveState(); render(); };
+endBtn.onclick=()=>{
+	// capture summary
+	const summary = {
+		date: new Date().toISOString(),
+		rounds,
+		players: players.map(p=>({name:p.name, total: p.scores.reduce((a,b)=>a+b,0)})),
+		scores: players.map(p=>p.scores.slice())
+	};
+	recentGames.unshift(summary);
+		if(recentGames.length>5) recentGames.length = 5;
+	// reset players and rounds when returning to setup
+	players = [];
+	rounds = 0;
+	started = false;
+	input.value = '';
+	saveState();
+	render();
+};
+
+table.onclick=e=>{
+	if(e.target.classList.contains('next-round')) addRound();
+};
+
+function updateTotals(){
+	const totalsRow = tfoot.querySelector('tr');
+	if(!totalsRow) return;
+	players.forEach((p,i)=>{
+		const cell = totalsRow.children[i+1];
+		if(cell) cell.textContent = p.scores.reduce((a,b)=>a+b,0);
+	});
+}
+
+let lastAccept = false;
+
+// Keep focus on input until a valid integer is entered or Enter/Tab is pressed
+tbody.addEventListener('input', e=>{
+	const el = e.target;
+	if(!el.classList || !el.classList.contains('round-input')) return;
+	const i = +el.dataset.p;
+	const r = +el.dataset.r;
+	const val = el.value.trim();
+	players[i].scores[r] = val === '' ? 0 : +val;
+	saveState();
+	updateTotals();
 });
-recalc();
-}
 
-function toggle(){
-table.tBodies[0].style.display=
-table.tBodies[0].style.display==="none"?"":"none";
-}
+tbody.addEventListener('keydown', e=>{
+	const el = e.target;
+	if(!el.classList || !el.classList.contains('round-input')) return;
+	if(e.key === 'Enter' || e.key === 'Tab'){
+		lastAccept = true;
+		const i = +el.dataset.p;
+		const r = +el.dataset.r;
+		players[i].scores[r] = el.value.trim() === '' ? 0 : +el.value;
+		saveState();
+		updateTotals();
+		if(e.key === 'Enter'){ el.blur(); e.preventDefault(); }
+	}
+});
+
+// Use capture to catch blur events
+tbody.addEventListener('blur', e=>{
+	const el = e.target;
+	if(!el.classList || !el.classList.contains('round-input')) return;
+	if(!started) return; // only enforce during game
+	const val = el.value.trim();
+	const isValid = val !== '' && /^-?\d+$/.test(val);
+	if(lastAccept){ lastAccept = false; return; }
+	if(!isValid){ setTimeout(()=> el.focus(),0); }
+}, true);
+
+clearBtn.onclick=()=>{
+	if(confirm('Clear all?')){
+		players=[];rounds=0;started=false;
+		saveState();render();
+	}
+};
+
+render();
 </script>
-
 </body>
 </html>
