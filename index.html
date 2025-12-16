@@ -78,7 +78,7 @@ th:last-child, tbody td:last-child, tfoot td:last-child{ text-align:left; vertic
 
 <body>
 <div class="container">
-<h1>Scrabble Scoresheet</h1>
+<h1 style="font-weight:700;">Scrabble Scoresheet</h1>
 
 <form id="add-player-form">
 <input id="player-name" type="text" placeholder="Enter a player's name" />
@@ -232,9 +232,9 @@ function render(){
 	}
 
 	const tr=document.createElement('tr');
-	tr.innerHTML='<td>Total</td>';
+	tr.innerHTML='<td style="text-indent: -0.5ch;">Total</td>';
 	players.forEach(p=>{
-		tr.innerHTML+=`<td>${p.scores.reduce((a,b)=>a+b,0)}</td>`;
+		tr.innerHTML+=`<td style="text-indent: 0.4ch">${p.scores.reduce((a,b)=>a+b,0)}</td>`;
 	});
 	tr.innerHTML += '<td></td>';
 	tfoot.appendChild(tr);
