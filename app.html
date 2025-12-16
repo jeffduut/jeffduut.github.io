@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <title>Scrabble Scoresheet</title>
+  <meta name="description" content="Track your Scrabble game scores with this easy-to-use digital scoresheet." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    :root {
+      --background: #f8fafc;
+      --foreground: #0f172a;
+      --card: #ffffff;
+      --card-border: #e2e8f0;
+      --muted: #f1f5f9;
+      --muted-foreground: #64748b;
+      --primary: #16a34a;
+      --primary-foreground: #ffffff;
+      --secondary: #f1f5f9;
+      --secondary-foreground: #0f172a;
+      --destructive: #dc2626;
+      --destructive-foreground: #ffffff;
+      --border: #e2e8f0;
+      --input-border: #cbd5e1;
+      --ring: #16a34a;
+      --radius: 0.5rem;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--background);
+      color: var(--foreground);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      padding: 1rem 0 1.5rem;
+    }
+
+    .header h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--foreground);
+    }
+
+    .header p {
+      font-size: 0.875rem;
+      color: var(--muted-foreground);
+      margin-top: 0.25rem;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .card-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-title svg {
+      width: 1.25rem;
+      height: 1.25rem;
+      color: var(--muted-foreground);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.625rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      border-radius: 9999px;
+      background: var(--secondary);
+      color: var(--secondary-foreground);
+    }
+
+    .badge-primary {
+      background: var(--primary);
+      color: var(--primary-foreground);
+    }
+
+    .form-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      font-family: inherit;
+      font-size: 0.875rem;
+      padding: 0.625rem 0.75rem;
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius);
+      background: var(--card);
+      color: var(--foreground);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus {
+      border-color: var(--ring);
+      box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.2);
+    }
+
+    input[type="text"] {
+      flex: 1;
+      height: 2.75rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 500;
+      padding: 0.625rem 1rem;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: filter 0.15s, transform 0.1s;
+      height: 2.75rem;
+    }
+
+    .btn:hover { filter: brightness(1.05); }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn:disabled:hover { filter: none; }
+
+    .btn-primary {
+      background: var(--primary);
+      color: var(--primary-foreground);
+    }
+
+    .btn-secondary {
+      background: var(--secondary);
+      color: var(--secondary-foreground);
+    }
+
+    .btn-destructive {
+      background: var(--destructive);
+      color: var(--destructive-foreground);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted-foreground);
+    }
+
+    .btn-ghost:hover {
+      background: var(--muted);
+    }
+
+    .btn-icon {
+      width: 2.75rem;
+      padding: 0;
+    }
+
+    .btn-icon svg {
+      width: 1rem;
+      height: 1rem;
+    }
+
+    .player-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .player-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding: 0.75rem;
+      background: var(--muted);
+      border-radius: var(--radius);
+      animation: slideIn 0.15s ease-out;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .player-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .player-number {
+      width: 1.5rem;
+      height: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 500;
+      background: rgba(22, 163, 74, 0.1);
+      color: var(--primary);
+      border-radius: 9999px;
+    }
+
+    .player-name {
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 1rem;
+      color: var(--muted-foreground);
+      font-size: 0.875rem;
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .score-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    .score-table th,
+    .score-table td {
+      padding: 0.25rem;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .score-table th:first-child,
+    .score-table td:first-child {
+      width: 2rem;
+      text-align: left;
+    }
+
+    .score-table thead th {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--muted-foreground);
+      padding-bottom: 0.5rem;
+    }
+
+    .score-table thead th:not(:first-child) {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--foreground);
+    }
+
+    .player-name-btn {
+      background: none;
+      border: none;
+      font-family: inherit;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--foreground);
+      cursor: pointer;
+      padding: 0.25rem;
+      text-decoration: none;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .player-name-btn:hover {
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
+
+    .score-input {
+      width: 100%;
+      height: 2.5rem;
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 0.25rem;
+    }
+
+    .score-table tbody td:first-child {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--muted-foreground);
+    }
+
+    .score-table tfoot tr {
+      border-top: 2px solid var(--border);
+    }
+
+    .score-table tfoot td {
+      padding-top: 0.75rem;
+      font-weight: 600;
+    }
+
+    .score-table tfoot td:first-child {
+      font-size: 0.875rem;
+    }
+
+    .total-score {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+      font-size: 1.25rem;
+      font-weight: 700;
+      transition: transform 0.2s;
+    }
+
+    .total-score.winner {
+      color: var(--primary);
+    }
+
+    .total-score svg {
+      width: 1rem;
+      height: 1rem;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .total-updated {
+      animation: pulse 0.3s ease;
+    }
+
+    .game-item {
+      padding: 0.75rem;
+      background: var(--muted);
+      border-radius: var(--radius);
+      margin-bottom: 0.75rem;
+    }
+
+    .game-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .game-date {
+      font-size: 0.75rem;
+      color: var(--muted-foreground);
+      margin-bottom: 0.5rem;
+    }
+
+    .game-players {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 400px) {
+      body { padding: 1rem 0.75rem; }
+      .card { padding: 1rem; }
+      .score-input { height: 2.25rem; font-size: 0.875rem; }
+      .player-name-btn { font-size: 0.75rem; }
+      .total-score { font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Scrabble Scoresheet</h1>
+      <p>Track your game scores</p>
+    </div>
+
+    <div id="setup-view">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Players
+          </div>
+          <span id="player-count" class="badge">0/4</span>
+        </div>
+
+        <form id="add-player-form" class="form-row">
+          <input type="text" id="player-input" placeholder="Enter player name" maxlength="20" />
+          <button type="submit" id="add-btn" class="btn btn-primary btn-icon" disabled>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+        </form>
+
+        <div id="player-list" class="player-list"></div>
+        <p id="empty-state" class="empty-state">No players added yet</p>
+
+        <div class="button-grid">
+          <button id="start-btn" class="btn btn-primary" disabled>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:1rem;height:1rem"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Start Game
+          </button>
+          <button id="clear-btn" class="btn btn-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:1rem;height:1rem"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+            Clear All
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Recent Games
+          </div>
+        </div>
+        <div id="recent-games"></div>
+      </div>
+    </div>
+
+    <div id="game-view" class="hidden">
+      <div class="card">
+        <table class="score-table">
+          <thead id="table-head"></thead>
+          <tbody id="table-body"></tbody>
+          <tfoot id="table-foot"></tfoot>
+        </table>
+
+        <div class="button-grid" style="margin-top: 1rem;">
+          <button id="add-round-btn" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:1rem;height:1rem"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Round
+          </button>
+          <button id="end-btn" class="btn btn-destructive">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:1rem;height:1rem"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+            End Game
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'scrabble_state_react';
+
+    const defaultState = {
+      players: [],
+      rounds: 0,
+      started: false,
+      recentGames: []
+    };
+
+    let state = loadState();
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          return { ...defaultState, ...JSON.parse(saved) };
+        }
+      } catch (e) {
+        console.log('Failed to load state');
+      }
+      return { ...defaultState };
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    const playerInput = document.getElementById('player-input');
+    const addBtn = document.getElementById('add-btn');
+    const addPlayerForm = document.getElementById('add-player-form');
+    const playerList = document.getElementById('player-list');
+    const emptyState = document.getElementById('empty-state');
+    const playerCount = document.getElementById('player-count');
+    const startBtn = document.getElementById('start-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const setupView = document.getElementById('setup-view');
+    const gameView = document.getElementById('game-view');
+    const tableHead = document.getElementById('table-head');
+    const tableBody = document.getElementById('table-body');
+    const tableFoot = document.getElementById('table-foot');
+    const addRoundBtn = document.getElementById('add-round-btn');
+    const endBtn = document.getElementById('end-btn');
+    const recentGamesEl = document.getElementById('recent-games');
+
+    playerInput.addEventListener('input', () => {
+      addBtn.disabled = !playerInput.value.trim() || state.players.length >= 4;
+    });
+
+    addPlayerForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      addPlayer();
+    });
+
+    startBtn.addEventListener('click', startGame);
+    clearBtn.addEventListener('click', clearAll);
+    addRoundBtn.addEventListener('click', addRound);
+    endBtn.addEventListener('click', endGame);
+
+    function addPlayer() {
+      const name = playerInput.value.trim();
+      if (!name || state.players.length >= 4) return;
+
+      state.players.push({ name, scores: Array(state.rounds).fill(null) });
+      playerInput.value = '';
+      playerInput.focus();
+      addBtn.disabled = true;
+      saveState();
+      render();
+    }
+
+    function removePlayer(index) {
+      state.players.splice(index, 1);
+      saveState();
+      render();
+    }
+
+    function startGame() {
+      if (state.players.length === 0) return;
+      state.started = true;
+      if (state.rounds === 0) {
+        state.rounds = 1;
+        state.players.forEach(p => p.scores.push(null));
+      }
+      saveState();
+      render();
+    }
+
+    function addRound() {
+      state.rounds++;
+      state.players.forEach(p => p.scores.push(null));
+      saveState();
+      renderGame();
+    }
+
+    function updateScore(playerIndex, roundIndex, value) {
+      state.players[playerIndex].scores[roundIndex] = value === '' ? null : (parseInt(value, 10) || 0);
+      saveState();
+      updateTotals();
+    }
+
+    function getTotal(player) {
+      return player.scores.reduce((a, b) => a + (b ?? 0), 0);
+    }
+
+    function getWinner() {
+      if (state.players.length === 0) return null;
+      let maxScore = -Infinity;
+      let winner = null;
+      for (const p of state.players) {
+        const total = getTotal(p);
+        if (total > maxScore) {
+          maxScore = total;
+          winner = p;
+        }
+      }
+      return winner;
+    }
+
+    function endGame() {
+      const newGame = {
+        date: new Date().toISOString(),
+        rounds: state.rounds,
+        players: state.players.map(p => ({
+          name: p.name,
+          total: getTotal(p)
+        }))
+      };
+      state.recentGames.unshift(newGame);
+      if (state.recentGames.length > 5) state.recentGames.length = 5;
+      state.players = [];
+      state.rounds = 0;
+      state.started = false;
+      saveState();
+      render();
+    }
+
+    function clearAll() {
+      if (confirm('Clear all players and reset?')) {
+        state.players = [];
+        state.rounds = 0;
+        state.started = false;
+        saveState();
+        render();
+      }
+    }
+
+    function renderSetup() {
+      setupView.classList.remove('hidden');
+      gameView.classList.add('hidden');
+
+      playerCount.textContent = `${state.players.length}/4`;
+      startBtn.disabled = state.players.length === 0;
+
+      if (state.players.length === 0) {
+        playerList.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+      } else {
+        playerList.classList.remove('hidden');
+        emptyState.classList.add('hidden');
+        playerList.innerHTML = state.players.map((p, i) => `
+          <div class="player-item">
+            <div class="player-info">
+              <span class="player-number">${i + 1}</span>
+              <span class="player-name">${escapeHtml(p.name)}</span>
+            </div>
+            <button class="btn btn-ghost btn-icon" onclick="removePlayer(${i})">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        `).join('');
+      }
+
+      renderRecentGames();
+    }
+
+    function renderRecentGames() {
+      if (state.recentGames.length === 0) {
+        recentGamesEl.innerHTML = '<p class="empty-state">No games played yet</p>';
+        return;
+      }
+
+      recentGamesEl.innerHTML = state.recentGames.map((game, idx) => {
+        const maxScore = Math.max(...game.players.map(p => p.total));
+        const date = new Date(game.date).toLocaleDateString(undefined, {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+
+        return `
+          <div class="game-item">
+            <div class="game-date">${date}</div>
+            <div class="game-players">
+              ${game.players.map(p => `
+                <span class="badge ${p.total === maxScore ? 'badge-primary' : ''}">
+                  ${p.total === maxScore ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:0.75rem;height:0.75rem"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>' : ''}
+                  ${escapeHtml(p.name)}: ${p.total}
+                </span>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderGame() {
+      setupView.classList.add('hidden');
+      gameView.classList.remove('hidden');
+
+      tableHead.innerHTML = `
+        <tr>
+          <th>R</th>
+          ${state.players.map((p, i) => `
+            <th>
+              <button class="player-name-btn" onclick="editPlayerName(${i})" title="Click to edit">${escapeHtml(p.name)}</button>
+            </th>
+          `).join('')}
+        </tr>
+      `;
+
+      tableBody.innerHTML = Array.from({ length: state.rounds }).map((_, r) => `
+        <tr>
+          <td>${r + 1}</td>
+          ${state.players.map((p, i) => `
+            <td>
+              <input type="number" inputmode="numeric" class="score-input" 
+                     value="${p.scores[r] ?? ''}" 
+                     onchange="updateScore(${i}, ${r}, this.value)" />
+            </td>
+          `).join('')}
+        </tr>
+      `).join('');
+
+      updateTotals();
+    }
+
+    function updateTotals() {
+      const winner = getWinner();
+      tableFoot.innerHTML = `
+        <tr>
+          <td>Total</td>
+          ${state.players.map((p, i) => {
+            const total = getTotal(p);
+            const isWinner = winner === p && total > 0;
+            return `
+              <td>
+                <span class="total-score ${isWinner ? 'winner' : ''}">
+                  ${isWinner ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>' : ''}
+                  ${total}
+                </span>
+              </td>
+            `;
+          }).join('')}
+        </tr>
+      `;
+    }
+
+    function editPlayerName(index) {
+      const newName = prompt('Enter new name:', state.players[index].name);
+      if (newName && newName.trim()) {
+        state.players[index].name = newName.trim();
+        saveState();
+        renderGame();
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function render() {
+      if (state.started) {
+        renderGame();
+      } else {
+        renderSetup();
+      }
+    }
+
+    render();
+  </script>
+</body>
+</html>
